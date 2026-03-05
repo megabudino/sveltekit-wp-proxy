@@ -36,4 +36,10 @@ export interface WpProxyConfig {
 	 * Defaults to false (assets rewritten to absolute WordPress URLs).
 	 */
 	proxyAssets?: boolean;
+
+	/**
+	 * Additional origin URLs whose absolute references in HTML should be
+	 * rewritten the same way as `wordpressUrl` (e.g. legacy/migration domains).
+	 */
+	additionalOrigins?: string[];
 }

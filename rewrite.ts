@@ -12,23 +12,40 @@ function domainPattern(siteUrl: string): RegExp {
 }
 
 /**
+ * Build a regex that matches absolute URLs for a given origin,
+ * capturing the path portion (everything after the origin).
+ */
+function originPattern(origin: string): RegExp {
+	const escaped = origin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	return new RegExp(escaped, 'gi');
+}
+
+/**
  * Rewrite HTML returned by WordPress so it works under the public domain.
  *
  * - Absolute links pointing to the public domain → relative paths.
- * - When `proxyAssets` is false (default), relative src/link for wp-content/wp-includes
- *   are rewritten to absolute WordPress origin URLs.
- * - When `proxyAssets` is true, relative paths are left as-is (served through the proxy).
+ * - When `proxyAssets` is true, absolute WordPress origin URLs for
+ *   wp-content/wp-includes are stripped to relative paths (served through the proxy).
+ * - When `proxyAssets` is false (default), those URLs are left pointing to the WordPress origin.
  */
 export function rewriteHtml(
 	html: string,
 	wordpressUrl: string,
 	siteUrl: string,
-	proxyAssets = false
+	proxyAssets = false,
+	additionalOrigins: string[] = []
 ): string {
 	// Absolute hrefs → relative
 	html = html.replace(domainPattern(siteUrl), 'href="$2"');
 
-	if (!proxyAssets) {
+	if (proxyAssets) {
+		// Strip all WordPress origin URLs to relative paths
+		// so assets are served through the SvelteKit proxy
+		const origins = [wordpressUrl, ...additionalOrigins];
+		for (const origin of origins) {
+			html = html.replace(originPattern(origin), '');
+		}
+	} else {
 		// Rewrite relative src → absolute WordPress origin
 		html = html.replace(
 			/src=["']\/wp-content\/([^"']+)["']/gi,

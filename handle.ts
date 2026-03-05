@@ -19,6 +19,7 @@ export function createWpProxyHandle(config: WpProxyConfig): Handle {
 	const redirects = config.redirects ?? {};
 	const sitemapCache = `public, max-age=${config.sitemapCacheSeconds ?? 3600}`;
 	const proxyAssets = config.proxyAssets ?? false;
+	const additionalOrigins = config.additionalOrigins ?? [];
 
 	return async ({ event, resolve }) => {
 		const { pathname, search } = event.url;
@@ -117,7 +118,7 @@ export function createWpProxyHandle(config: WpProxyConfig): Handle {
 		// ── HTML ──
 		if (contentType.includes('text/html')) {
 			const html = await upstreamResp.text();
-			return new Response(rewriteHtml(html, wordpressUrl, siteUrl, proxyAssets), {
+			return new Response(rewriteHtml(html, wordpressUrl, siteUrl, proxyAssets, additionalOrigins), {
 				status: upstreamResp.status,
 				statusText: upstreamResp.statusText,
 				headers: clean

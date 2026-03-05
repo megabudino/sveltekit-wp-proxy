@@ -43,7 +43,8 @@ That's it. Every route **not** listed in `passthroughRoutes` is proxied to WordP
 | `sitemapUrls` | `string[]` | `passthroughRoutes` | SvelteKit URLs to inject into WordPress sitemaps |
 | `redirects` | `Record<string, string>` | `{}` | Path-to-path redirects applied before proxying (301) |
 | `sitemapCacheSeconds` | `number` | `3600` | `Cache-Control` max-age for sitemap responses |
-| `proxyAssets` | `boolean` | `false` | If `true`, proxy `wp-content`/`wp-includes` through SvelteKit to hide the WordPress origin |
+| `proxyAssets` | `boolean` | `false` | If `true`, absolute WordPress origin URLs for `wp-content`/`wp-includes` are stripped to relative paths so assets are served through SvelteKit — avoids CORS issues and hides the WordPress origin |
+| `additionalOrigins` | `string[]` | `[]` | Extra origin URLs whose absolute references in HTML are rewritten the same way as `wordpressUrl` (e.g. legacy or migration domains) |
 
 ## How it works
 
@@ -64,7 +65,7 @@ Client request
 ### HTML rewriting
 
 - **Absolute links** (`href`) pointing to the public domain are converted to relative paths
-- **`wp-content` / `wp-includes` assets**: rewritten to absolute WordPress URLs (default), or left relative when `proxyAssets: true`
+- **`wp-content` / `wp-includes` assets**: left pointing to the WordPress origin (default), or stripped to relative paths when `proxyAssets: true` so they're served through SvelteKit — avoiding CORS issues and hiding the WordPress origin
 
 ### Sitemap injection
 
@@ -86,6 +87,7 @@ export const handle = createWpProxyHandle({
   },
   sitemapCacheSeconds: 7200,
   proxyAssets: true,
+  additionalOrigins: ['https://old.example.com'],
 });
 ```
 
